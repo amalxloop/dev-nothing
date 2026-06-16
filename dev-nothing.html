@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>/dev/nothing</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400&family=IBM+Plex+Sans:wght@300&display=swap');
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --void: #000000;
+      --surface: #080808;
+      --dim: #111111;
+      --border: #1a1a1a;
+      --muted: #2a2a2a;
+      --ghost: #333333;
+      --text-faint: #444444;
+      --text-dim: #666666;
+      --text: #999999;
+      --text-bright: #cccccc;
+      --nothing: #ffffff;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--void);
+      color: var(--text);
+      font-family: 'IBM Plex Mono', monospace;
+      font-weight: 300;
+      overflow: hidden;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 560px;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .header {
+      margin-bottom: 3rem;
+    }
+
+    .path {
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      color: var(--text-faint);
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+
+    .title {
+      font-size: 1.5rem;
+      font-weight: 300;
+      color: var(--text-bright);
+      letter-spacing: -0.02em;
+      line-height: 1;
+    }
+
+    .title span {
+      color: var(--nothing);
+    }
+
+    .subtitle {
+      margin-top: 0.75rem;
+      font-size: 0.7rem;
+      color: var(--text-faint);
+      letter-spacing: 0.05em;
+      font-family: 'IBM Plex Sans', sans-serif;
+      font-weight: 300;
+    }
+
+    .input-area {
+      position: relative;
+      border: 1px solid var(--border);
+      background: var(--surface);
+    }
+
+    .input-area::before {
+      content: '>';
+      position: absolute;
+      top: 1rem;
+      left: 1rem;
+      color: var(--text-faint);
+      font-size: 0.8rem;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 120px;
+      background: transparent;
+      border: none;
+      outline: none;
+      resize: none;
+      padding: 1rem 1rem 1rem 2.2rem;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.8rem;
+      font-weight: 300;
+      color: var(--text-bright);
+      line-height: 1.6;
+      caret-color: var(--nothing);
+    }
+
+    textarea::placeholder {
+      color: var(--text-faint);
+    }
+
+    textarea::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    textarea::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    textarea::-webkit-scrollbar-thumb {
+      background: var(--ghost);
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.6rem 1rem;
+      border-top: 1px solid var(--border);
+      background: var(--dim);
+    }
+
+    .char-count {
+      font-size: 0.6rem;
+      color: var(--text-faint);
+      letter-spacing: 0.1em;
+    }
+
+    .submit-btn {
+      background: none;
+      border: 1px solid var(--ghost);
+      color: var(--text-dim);
+      padding: 0.35rem 1rem;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      text-transform: uppercase;
+    }
+
+    .submit-btn:hover {
+      border-color: var(--text-faint);
+      color: var(--text);
+    }
+
+    .submit-btn:active {
+      background: var(--muted);
+    }
+
+    .submit-btn.sending {
+      color: var(--text-faint);
+      border-color: var(--border);
+      cursor: default;
+    }
+
+    .output-area {
+      margin-top: 1px;
+      border: 1px solid var(--border);
+      background: var(--void);
+      min-height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .output-area.idle {
+      border-color: var(--border);
+    }
+
+    .output-area.processing {
+      border-color: var(--muted);
+    }
+
+    .output-area.returned {
+      border-color: var(--border);
+    }
+
+    .output-label {
+      position: absolute;
+      top: 0.5rem;
+      left: 1rem;
+      font-size: 0.55rem;
+      letter-spacing: 0.2em;
+      color: var(--text-faint);
+      text-transform: uppercase;
+    }
+
+    .output-content {
+      width: 100%;
+      height: 100%;
+      min-height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem 1rem;
+    }
+
+    .void-display {
+      text-align: center;
+    }
+
+    .void-indicator {
+      font-size: 0.65rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--text-faint);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .void-indicator.visible {
+      opacity: 1;
+    }
+
+    .processing-dots {
+      display: flex;
+      gap: 6px;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .processing-dots.visible {
+      opacity: 1;
+    }
+
+    .dot {
+      width: 3px;
+      height: 3px;
+      background: var(--ghost);
+      border-radius: 50%;
+      animation: pulse 1.2s ease-in-out infinite;
+    }
+
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.2; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.3); }
+    }
+
+    .stats {
+      margin-top: 2rem;
+      display: flex;
+      gap: 2rem;
+    }
+
+    .stat {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .stat-value {
+      font-size: 1.1rem;
+      color: var(--text-dim);
+      letter-spacing: -0.02em;
+    }
+
+    .stat-label {
+      font-size: 0.55rem;
+      color: var(--text-faint);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      font-family: 'IBM Plex Sans', sans-serif;
+    }
+
+    .footer {
+      margin-top: 3rem;
+      font-size: 0.55rem;
+      color: var(--text-faint);
+      letter-spacing: 0.1em;
+      font-family: 'IBM Plex Sans', sans-serif;
+      font-weight: 300;
+    }
+
+    .cursor-blink {
+      display: inline-block;
+      width: 6px;
+      height: 0.8em;
+      background: var(--nothing);
+      margin-left: 2px;
+      vertical-align: middle;
+      animation: blink 1.2s step-end infinite;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .cursor-blink.visible {
+      opacity: 1;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .dot, .cursor-blink { animation: none; }
+      * { transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+
+    <div class="header">
+      <div class="path">silver eagle corp · experimental</div>
+      <div class="title"><span>/dev/</span>nothing</div>
+      <div class="subtitle">A transformer that has context. Returns nothing.</div>
+    </div>
+
+    <div class="input-area">
+      <textarea
+        id="prompt"
+        placeholder="ask anything."
+        spellcheck="false"
+        autocomplete="off"
+        maxlength="9999"
+      ></textarea>
+      <div class="controls">
+        <span class="char-count" id="charCount">0 chars</span>
+        <button class="submit-btn" id="submitBtn" onclick="sendToVoid()">transmit</button>
+      </div>
+    </div>
+
+    <div class="output-area idle" id="outputArea">
+      <div class="output-label">output</div>
+      <div class="output-content">
+        <div class="void-display">
+          <div class="processing-dots" id="processingDots">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+          </div>
+          <div class="void-indicator" id="voidIndicator">
+            <span id="voidText"></span><span class="cursor-blink" id="cursor"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-value" id="transmissions">0</div>
+        <div class="stat-label">transmissions</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="returned">0</div>
+        <div class="stat-label">returned</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">∅</div>
+        <div class="stat-label">always</div>
+      </div>
+    </div>
+
+    <div class="footer">
+      v0.0.0 · all inputs absorbed · no outputs produced · ever
+    </div>
+
+  </div>
+
+  <script>
+    const textarea = document.getElementById('prompt');
+    const charCount = document.getElementById('charCount');
+    const submitBtn = document.getElementById('submitBtn');
+    const outputArea = document.getElementById('outputArea');
+    const processingDots = document.getElementById('processingDots');
+    const voidIndicator = document.getElementById('voidIndicator');
+    const voidText = document.getElementById('voidText');
+    const cursor = document.getElementById('cursor');
+    const transmissionsEl = document.getElementById('transmissions');
+    const returnedEl = document.getElementById('returned');
+
+    let transmissions = 0;
+    let isProcessing = false;
+
+    textarea.addEventListener('input', () => {
+      const len = textarea.value.length;
+      charCount.textContent = len + ' char' + (len !== 1 ? 's' : '');
+    });
+
+    textarea.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+        sendToVoid();
+      }
+    });
+
+    function typeOut(text, el, speed, cb) {
+      let i = 0;
+      el.textContent = '';
+      const interval = setInterval(() => {
+        el.textContent += text[i];
+        i++;
+        if (i >= text.length) {
+          clearInterval(interval);
+          if (cb) cb();
+        }
+      }, speed);
+    }
+
+    function sendToVoid() {
+      if (isProcessing) return;
+      const input = textarea.value.trim();
+      if (!input) return;
+
+      isProcessing = true;
+      transmissions++;
+      transmissionsEl.textContent = transmissions;
+
+      submitBtn.classList.add('sending');
+      submitBtn.textContent = 'transmitting';
+
+      outputArea.className = 'output-area processing';
+      voidIndicator.classList.remove('visible');
+      cursor.classList.remove('visible');
+      voidText.textContent = '';
+      processingDots.classList.add('visible');
+
+      // Processing time — feels real, returns nothing
+      const delay = 800 + Math.random() * 1200;
+
+      setTimeout(() => {
+        processingDots.classList.remove('visible');
+
+        setTimeout(() => {
+          outputArea.className = 'output-area returned';
+          voidIndicator.classList.add('visible');
+          cursor.classList.add('visible');
+
+          const messages = [
+            '',
+            '',
+            '',
+            '',
+            '',
+          ];
+
+          // Always nothing. Pick a representation of nothing.
+          const nothings = ['∅', '—', '', 'null', 'void', '0x00'];
+          const chosen = nothings[Math.floor(Math.random() * nothings.length)];
+
+          typeOut(chosen, voidText, 60, () => {
+            setTimeout(() => {
+              cursor.classList.remove('visible');
+            }, 800);
+          });
+
+          returnedEl.textContent = '∅';
+
+          submitBtn.classList.remove('sending');
+          submitBtn.textContent = 'transmit';
+          isProcessing = false;
+
+        }, 200);
+
+      }, delay);
+    }
+  </script>
+
+</body>
+</html>
